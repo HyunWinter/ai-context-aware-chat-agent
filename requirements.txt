@@ -1,0 +1,3 @@
+openai
+mem0ai[nlp]>=2.0.6
+python-dotenv
