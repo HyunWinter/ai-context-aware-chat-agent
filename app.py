@@ -3,6 +3,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+import streamlit as st
 from dotenv import load_dotenv
 from mem0 import Memory
 from openai import OpenAI
@@ -135,3 +136,96 @@ class CustomerSupportAgent:
         except Exception as e:
             logger.exception("Error processing user query")
             return "I apologize, but I encountered a system error while processing your request. Please try again."
+
+
+# ==========================================
+# 5. UI (Presentation Layer - Streamlit)
+# ==========================================
+def init_session_state() -> None:
+    """Initializes Streamlit session state variables."""
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "agent" not in st.session_state:
+        st.session_state.agent = None
+    if "current_customer" not in st.session_state:
+        st.session_state.current_customer = None
+
+def main():
+    st.set_page_config(
+        page_title="Support AI",
+        page_icon="👟",
+        layout="centered",
+        initial_sidebar_state="expanded"
+    )
+    init_session_state()
+
+    # --- Header ---
+    st.title("Nike Customer Support AI")
+    st.caption("A context-aware shopping assistant for Nike members and sneakerheads")
+
+    if not config.openai_api_key:
+        st.error("🚨 `OPENAI_API_KEY` is missing. Please check your `.env` file.")
+        st.stop()
+
+    # --- Dependency Injection & Initialization ---
+    try:
+        if st.session_state.agent is None:
+            memory_svc = MemoryService(config.qdrant_host, config.qdrant_port, config.openai_model)
+            st.session_state.agent = CustomerSupportAgent(config, memory_svc)
+    except RuntimeError as e:
+        st.error(f"🚨 Initialization Error: {e}")
+        st.stop()
+
+    # --- Sidebar ---
+    with st.sidebar:
+        st.header("👤 Member Context")
+        customer_id = st.text_input("Enter Member ID", placeholder="e.g., nike-member-77")
+        
+        # Reset chat if a new customer logs in
+        if customer_id and st.session_state.current_customer != customer_id:
+            st.session_state.messages = []
+            st.session_state.current_customer = customer_id
+            
+        st.divider()
+        
+        # Memory Viewer
+        if st.button("🔍 View Memory Info", use_container_width=True):
+            if not customer_id:
+                st.warning("Please enter a Customer ID first.")
+            else:
+                with st.spinner("Fetching memories..."):
+                    memories = st.session_state.agent.memory_service.get_all_memories(customer_id)
+                    if memories and "results" in memories and memories["results"]:
+                        st.subheader("Stored Memories")
+                        for m in memories["results"]:
+                            st.info(m.get("memory", ""))
+                    else:
+                        st.info("No memories found for this customer.")
+
+    # --- Main Chat Interface ---
+    if not customer_id:
+        st.info("👋 Please enter your **Member ID** in the sidebar to start chatting.")
+        st.stop()
+
+    # Display chat history
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    # User Input
+    if query := st.chat_input("Ask me about sneakers, sizing, or your recent orders..."):
+        # Add to UI state immediately
+        st.session_state.messages.append({"role": "user", "content": query})
+        with st.chat_message("user"):
+            st.markdown(query)
+
+        # Process and respond
+        with st.chat_message("assistant"):
+            with st.spinner("Analyzing..."):
+                answer = st.session_state.agent.process_query(query, customer_id)
+                st.markdown(answer)
+                st.session_state.messages.append({"role": "assistant", "content": answer})
+
+
+if __name__ == "__main__":
+    main()

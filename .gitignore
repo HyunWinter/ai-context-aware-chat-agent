@@ -16,6 +16,9 @@ build/
 # Databases & Local Storage
 qdrant_storage/
 
+# Streamlit
+.streamlit/secrets.toml
+
 # IDE & OS
 .vscode/
 .idea/
