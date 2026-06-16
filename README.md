@@ -1,4 +1,4 @@
-# Context-Aware AI Support Agent (Proof of Concept)
+# Context-Aware AI Support Agent
 
 An exploratory project studying how to implement persistent long-term memory in LLM applications. This proof-of-concept integrates Streamlit, OpenAI, and Mem0 (backed by Qdrant) to demonstrate how an agent can remember past interactions and user preferences across multiple sessions.
 
