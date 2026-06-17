@@ -4,6 +4,11 @@ An exploratory project studying how to implement persistent long-term memory in 
 
 > **Note:** The application serves as a flexible harness for testing memory architectures. While currently configured with a Nike customer support persona for demonstration purposes, the domain and instructions can be easily swapped out.
 
+<div align="center">
+  <img src="screenshots/chat_interface.png" width="48%" alt="AI Chat Interface demonstrating memory">
+  <img src="screenshots/memory_viewer.png" width="48%" alt="Vector DB Memory Viewer">
+</div>
+
 ## How it works
 
 1. User enters their unique ID and types a message in the Streamlit UI.
